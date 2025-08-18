@@ -75,6 +75,14 @@
                 </div>
                 <input type="file" id="image-files" multiple accept="image/*" class="cursor-pointer">
             </div>
+            <div id="image-grid-controls" class="text-right mb-2 hidden">
+                <button id="clear-all-btn" class="inline-flex items-center text-sm font-medium text-red-600 hover:text-red-800 transition-colors focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
+                    </svg>
+                    Remove All
+                </button>
+            </div>
             <div id="image-preview-grid" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
         </section>
 
@@ -144,6 +152,10 @@
     const cardListInput = document.getElementById('card-list-input');
     const fetchStatus = document.getElementById('fetch-status');
 
+    // NEW: Variables for the "Remove All" button
+    const imageGridControls = document.getElementById('image-grid-controls');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+
     const uploadTitle = document.getElementById('upload-title');
     const cardbackTitle = document.getElementById('cardback-title');
     const settingsTitle = document.getElementById('settings-title');
@@ -154,6 +166,15 @@
         magic: { name: "https://api.scryfall.com/cards/named?fuzzy=", id: "https://api.scryfall.com/cards/" },
         yugioh: { name: "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=", id: "https://db.ygoprodeck.com/api/v7/cardinfo.php?id=" }
     };
+
+    // --- NEW: Function to show/hide the "Remove All" button ---
+    function updateClearButtonVisibility() {
+        if (uploadedImages.length > 0) {
+            imageGridControls.classList.remove('hidden');
+        } else {
+            imageGridControls.classList.add('hidden');
+        }
+    }
 
     // --- Input Type Detection ---
     function detectInputType(input, game) {
@@ -208,6 +229,7 @@
             const newImage = { id: `img-${Date.now()}-${Math.random()}`, name: name, size: imageBlob.size, dataUrl: e.target.result };
             uploadedImages.push(newImage);
             imagePreviewGrid.appendChild(createPreviewElement(newImage.id, name, e.target.result));
+            updateClearButtonVisibility(); // Update button visibility
         };
         reader.readAsDataURL(imageBlob);
     }
@@ -230,6 +252,7 @@
             e.stopPropagation();
             uploadedImages = uploadedImages.filter(img => img.id !== id);
             document.getElementById(id)?.remove();
+            updateClearButtonVisibility(); // Update button visibility
         });
         wrapper.append(img, overlay, removeButton);
         return wrapper;
@@ -289,6 +312,15 @@
         });
     });
 
+    // --- Event Listener for the "Remove All" button ---
+    clearAllBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to remove all card images?')) {
+            uploadedImages = []; // Clear the data array
+            imagePreviewGrid.innerHTML = ''; // Clear the UI
+            updateClearButtonVisibility(); // Hide the button
+        }
+    });
+
     // --- API Fetching Logic ---
     fetchCardsBtn.addEventListener('click', async () => {
         const cardListText = cardListInput.value.trim();
@@ -316,8 +348,6 @@
                 const cardData = await fetchCardData(task.value, selectedGame, task.type);
                 if (!cardData || !cardData.imageUrl) throw new Error('Image URL not found.');
 
-                // *** THIS IS THE KEY CHANGE ***
-                // Instead of fetching the image directly, we use our proxy for Yu-Gi-Oh!
                 let imageToFetch = cardData.imageUrl;
                 if (new URL(imageToFetch).hostname === 'images.ygoprodeck.com') {
                     imageToFetch = `/api/image-proxy?url=${encodeURIComponent(cardData.imageUrl)}`;
