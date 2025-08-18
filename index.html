@@ -3,482 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Layout PDF Generator</title>
+    <title>Card Proxy PDF Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pica/9.0.1/pica.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .file-input-container {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
-        .file-input-button {
-            border: 2px dashed #cbd5e1;
-            padding: 2rem;
-            text-align: center;
-            cursor: pointer;
-            width: 100%;
-            border-radius: 0.5rem;
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-        .file-input-button:hover {
-            background-color: #f8fafc;
-            border-color: #94a3b8;
-        }
-        .file-input-container input[type=file] {
-            position: absolute;
-            font-size: 100px;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .game-template {
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .game-template:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-        .remove-btn {
-            position: absolute;
-            top: 0.25rem;
-            right: 0.25rem;
-            width: 1.25rem;
-            height: 1.25rem;
-            background-color: rgba(0,0,0,0.6);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: bold;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .group:hover .remove-btn {
-            opacity: 1;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .file-input-container { position: relative; overflow: hidden; display: inline-block; }
+        .file-input-button { border: 2px dashed #cbd5e1; padding: 2rem; text-align: center; cursor: pointer; width: 100%; border-radius: 0.5rem; transition: background-color 0.2s, border-color 0.2s; }
+        .file-input-button:hover { background-color: #f8fafc; border-color: #94a3b8; }
+        .file-input-container input[type=file] { position: absolute; font-size: 100px; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .game-template { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .game-template.selected { border-color: #4f46e5; box-shadow: 0 0 0 2px #4f46e5; }
+        .game-template:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .remove-btn { position: absolute; top: 0.25rem; right: 0.25rem; width: 1.25rem; height: 1.25rem; background-color: rgba(0,0,0,0.6); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+        .group:hover .remove-btn { opacity: 1; }
+        #list-importer { transition: all 0.3s ease-in-out; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-900">Card Layout PDF Generator</h1>
-            <p class="text-lg text-gray-600 mt-2">Create print-ready PDF layouts for your custom cards.</p>
-        </header>
+<div class="container mx-auto p-4 md:p-8 max-w-4xl">
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900">Card Proxy PDF Generator</h1>
+        <p class="text-lg text-gray-600 mt-2">Create print-ready PDF layouts for your TCG proxies.</p>
+    </header>
 
-        <main class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+    <main class="bg-white p-6 md:p-8 rounded-xl shadow-lg space-y-8">
 
-            <!-- App Description -->
-            <section id="description" class="mb-8">
-                <p class="text-gray-700">
-                    Welcome! This tool helps you arrange your custom card images onto A4 pages for easy printing. Simply choose a game template or set your custom dimensions, upload your card fronts, add any card backs you want to print, and generate a print-ready PDF.
-                </p>
-            </section>
-
-            <!-- Game Templates -->
-            <section id="templates">
-                <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Game Templates (Click to Set Dimensions)</h2>
-                <div class="grid grid-cols-3 gap-4 text-center">
-                    <div class="game-template p-4 rounded-lg border bg-white" data-width="63" data-height="88">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Magicthegathering-logo.svg" alt="Magic: The Gathering Logo" class="h-12 mx-auto" onerror="this.onerror=null;this.src='https://placehold.co/120x48/EEE/333?text=Magic';">
-                        <p class="mt-2 text-sm font-semibold">Magic</p>
-                        <p class="text-xs text-gray-500">63mm x 88mm</p>
-                    </div>
-                    <div class="game-template p-4 rounded-lg border bg-white" data-width="63.5" data-height="88">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/320px-International_Pok%C3%A9mon_logo.svg.png" alt="Pokémon Logo" class="h-12 mx-auto" onerror="this.onerror=null;this.src='https://placehold.co/120x48/EEE/333?text=Pokemon';">
-                        <p class="mt-2 text-sm font-semibold">Pokémon</p>
-                        <p class="text-xs text-gray-500">63.5mm x 88mm</p>
-                    </div>
-                    <div class="game-template p-4 rounded-lg border bg-white" data-width="59" data-height="86">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Yu-Gi-Oh%21_%28Logo%29.jpg" alt="Yu-Gi-Oh! Logo" class="h-12 mx-auto" onerror="this.onerror=null;this.src='https://placehold.co/120x48/EEE/333?text=Yu-Gi-Oh!';">
-                        <p class="mt-2 text-sm font-semibold">Yu-Gi-Oh!</p>
-                        <p class="text-xs text-gray-500">59mm x 86mm</p>
-                    </div>
+        <section id="templates">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 1: Choose a Game</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                <div class="game-template p-4 rounded-lg border bg-white" data-game="magic" data-width="63" data-height="88">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Magicthegathering-logo.svg" alt="Magic: The Gathering Logo" class="h-12 mx-auto" onerror="this.onerror=null;this.src='https://placehold.co/120x48/EEE/333?text=Magic';">
+                    <p class="mt-2 text-sm font-semibold">Magic</p>
+                    <p class="text-xs text-gray-500">63mm x 88mm</p>
                 </div>
-            </section>
-
-            <!-- Step 1: Card & Layout Settings -->
-            <section id="settings" class="mt-8">
-                <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 1: Custom Layout Settings</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="cardWidth" class="block text-sm font-medium text-gray-700">Card Width (mm)</label>
-                        <input type="number" id="cardWidth" value="63.5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="cardHeight" class="block text-sm font-medium text-gray-700">Card Height (mm)</label>
-                        <input type="number" id="cardHeight" value="88.9" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="gap" class="block text-sm font-medium text-gray-700">Gap Between Cards (mm)</label>
-                        <input type="number" id="gap" value="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="margin" class="block text-sm font-medium text-gray-700">Page Margin (mm)</label>
-                        <input type="number" id="margin" value="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
+                <div class="game-template p-4 rounded-lg border bg-white" data-game="pokemon" data-width="63" data-height="88">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/320px-International_Pok%C3%A9mon_logo.svg.png" alt="Pokémon Logo" class="h-12 mx-auto" onerror="this.onerror=null;this.src='https://placehold.co/120x48/EEE/333?text=Pokemon';">
+                    <p class="mt-2 text-sm font-semibold">Pokémon</p>
+                    <p class="text-xs text-gray-500">63mm x 88mm</p>
                 </div>
-            </section>
-
-            <!-- Step 2: Upload Images -->
-            <section id="uploads" class="mt-8">
-                <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 2: Upload Your Card Images</h2>
-                <div class="file-input-container w-full">
-                    <div id="file-drop-zone" class="file-input-button">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-600">
-                            <span class="font-semibold text-indigo-600">Click to upload</span> or drag and drop your card fronts.
-                        </p>
-                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                    </div>
-                    <input type="file" id="image-files" multiple accept="image/*">
+                <div class="game-template p-4 rounded-lg border bg-white" data-game="yugioh" data-width="59" data-height="86">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Yu-Gi-Oh%21_%28Logo%29.jpg" alt="Yu-Gi-Oh! Logo" class="h-12 mx-auto" onerror="this.onerror=null;this.src='https://placehold.co/120x48/EEE/333?text=Yu-Gi-Oh!';">
+                    <p class="mt-2 text-sm font-semibold">Yu-Gi-Oh!</p>
+                    <p class="text-xs text-gray-500">59mm x 86mm</p>
                 </div>
-                <div id="image-preview-grid" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
-            </section>
-            
-            <!-- Step 3: Repeated Images -->
-            <section id="repeats" class="mt-8">
-                <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 3: Specify Repeated Images (e.g., Card Backs)</h2>
-                <div class="file-input-container w-full">
-                    <div id="repeat-file-drop-zone" class="file-input-button">
-                         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                            <path d="M4 16v-4a4 4 0 014-4h8l4-4h12a4 4 0 014 4v24a4 4 0 01-4 4H8a4 4 0 01-4-4v-4m16-4h16m-16-8h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-600">
-                            <span class="font-semibold text-indigo-600">Upload card backs</span> or other images to repeat.
-                        </p>
-                    </div>
-                    <input type="file" id="repeat-image-file" multiple accept="image/*">
-                </div>
-                <div id="repeat-image-preview-grid" class="mt-4 space-y-4"></div>
-            </section>
+            </div>
+        </section>
 
-
-            <!-- Step 4: Generate PDF -->
-            <section id="generate" class="mt-8 text-center">
-                <button id="generate-pdf-btn" class="w-full md:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                    Generate PDF
+        <section id="list-importer" class="hidden opacity-0">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Step 2: Fetch Cards by Name</h2>
+            <div>
+                <label for="card-list-input" class="block text-sm font-medium text-gray-700">Enter your card list</label>
+                <textarea id="card-list-input" rows="8" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Enter one card per line. You can use names or IDs.&#10;e.g.,&#10;4x Sol Ring (Name)&#10;1x mom-325 (Magic ID)&#10;2x Pikachu V (Name)&#10;1x swsh9-49 (Pokémon ID)&#10;1x Dark Magician (Name)&#10;1x 46986414 (Yu-Gi-Oh! ID)"></textarea>
+                <button id="fetch-cards-btn" class="mt-4 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400">
+                    Fetch Card Images
                 </button>
-                <div id="status" class="mt-4 text-gray-600"></div>
-                <div id="loader" class="loader mx-auto mt-4 hidden"></div>
-            </section>
-        </main>
-        
-        <footer class="text-center mt-8 text-sm text-gray-500">
-            <p>Created with jsPDF and Tailwind CSS.</p>
-        </footer>
-    </div>
+                <div id="fetch-status" class="mt-2 text-sm text-gray-600"></div>
+            </div>
+        </section>
 
-    <script>
-        // --- Global Variables & Setup ---
-        const { jsPDF } = window.jspdf;
-        const pica = window.pica();
-        let uploadedImages = [];
-        let repeatedImageTasks = []; // Changed to an array
+        <section id="uploads">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2" id="upload-title">Step 3: Or Upload Manually</h2>
+            <div class="file-input-container w-full">
+                <div id="file-drop-zone" class="file-input-button">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-indigo-600">Click to upload</span> or drag and drop card fronts.</p>
+                </div>
+                <input type="file" id="image-files" multiple accept="image/*" class="cursor-pointer">
+            </div>
+            <div id="image-preview-grid" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+        </section>
 
-        const imageFilesInput = document.getElementById('image-files');
-        const imagePreviewGrid = document.getElementById('image-preview-grid');
-        const repeatImageFileInput = document.getElementById('repeat-image-file');
-        const repeatImagePreviewGrid = document.getElementById('repeat-image-preview-grid');
-        const generatePdfBtn = document.getElementById('generate-pdf-btn');
-        const statusDiv = document.getElementById('status');
-        const loader = document.getElementById('loader');
-        
-        // --- File Input & Drag/Drop Handling ---
-        function setupFileInput(inputId, dropZoneId, isMultiple, callback) {
-            const inputEl = document.getElementById(inputId);
-            const dropZone = document.getElementById(dropZoneId);
+        <section id="repeats">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2" id="cardback-title">Step 4: Add Card Backs (Optional)</h2>
+            <div class="file-input-container w-full">
+                <div id="repeat-file-drop-zone" class="file-input-button">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M4 16v-4a4 4 0 014-4h8l4-4h12a4 4 0 014 4v24a4 4 0 01-4 4H8a4 4 0 01-4-4v-4m16-4h16m-16-8h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <p class="mt-2 text-sm text-gray-600"><span class="font-semibold text-indigo-600">Upload card backs</span> or other repeating images.</p>
+                </div>
+                <input type="file" id="repeat-image-file" multiple accept="image/*" class="cursor-pointer">
+            </div>
+            <div id="repeat-image-preview-grid" class="mt-4 space-y-4"></div>
+        </section>
 
-            if (!dropZone) {
-                console.error(`[Setup Error] Drop zone element with ID '${dropZoneId}' was not found.`);
-                return;
-            }
+        <section id="settings">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2" id="settings-title">Step 5: Layout Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="cardWidth" class="block text-sm font-medium text-gray-700">Card Width (mm)</label>
+                    <input type="number" id="cardWidth" value="63" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="cardHeight" class="block text-sm font-medium text-gray-700">Card Height (mm)</label>
+                    <input type="number" id="cardHeight" value="88" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="gap" class="block text-sm font-medium text-gray-700">Gap Between Cards (mm)</label>
+                    <input type="number" id="gap" value="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="margin" class="block text-sm font-medium text-gray-700">Page Margin (mm)</label>
+                    <input type="number" id="margin" value="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+            </div>
+        </section>
 
-            const handleFiles = (files) => {
-                if (isMultiple) {
-                    callback([...files]);
-                } else if (files.length > 0) {
-                    callback(files[0]);
-                }
+        <section id="generate" class="text-center">
+            <button id="generate-pdf-btn" class="w-full md:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Generate PDF
+            </button>
+            <div id="status" class="mt-4 text-gray-600"></div>
+            <div id="loader" class="loader mx-auto mt-4 hidden"></div>
+        </section>
+    </main>
+
+    <footer class="text-center mt-8 text-sm text-gray-500">
+        <p>Created with jsPDF and Tailwind CSS.</p>
+    </footer>
+</div>
+
+<script>
+    // --- Global Variables & Setup ---
+    const { jsPDF } = window.jspdf;
+    let uploadedImages = [];
+    let repeatedImageTasks = [];
+    let selectedGame = null;
+
+    const imagePreviewGrid = document.getElementById('image-preview-grid');
+    const repeatImagePreviewGrid = document.getElementById('repeat-image-preview-grid');
+    const generatePdfBtn = document.getElementById('generate-pdf-btn');
+    const statusDiv = document.getElementById('status');
+    const loader = document.getElementById('loader');
+
+    const listImporterSection = document.getElementById('list-importer');
+    const fetchCardsBtn = document.getElementById('fetch-cards-btn');
+    const cardListInput = document.getElementById('card-list-input');
+    const fetchStatus = document.getElementById('fetch-status');
+
+    const uploadTitle = document.getElementById('upload-title');
+    const cardbackTitle = document.getElementById('cardback-title');
+    const settingsTitle = document.getElementById('settings-title');
+
+    // --- API Configuration ---
+    const API_ENDPOINTS = {
+        pokemon: { name: "https://api.pokemontcg.io/v2/cards?q=name:", id: "https://api.pokemontcg.io/v2/cards/" },
+        magic: { name: "https://api.scryfall.com/cards/named?fuzzy=", id: "https://api.scryfall.com/cards/" },
+        yugioh: { name: "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=", id: "https://db.ygoprodeck.com/api/v7/cardinfo.php?id=" }
+    };
+
+    // --- Input Type Detection ---
+    function detectInputType(input, game) {
+        if (!game) return { type: 'name', value: input };
+        input = input.trim();
+        let idPattern;
+        switch (game) {
+            case 'pokemon': idPattern = /^[a-zA-Z0-9]+-[a-zA-Z0-9]+$/; break;
+            case 'magic':
+                idPattern = /^[a-zA-Z0-9]{3,}-\d+$/;
+                if (idPattern.test(input)) return { type: 'id', value: input.replace('-', '/') };
+                break;
+            case 'yugioh': idPattern = /^\d{5,8}$/; break;
+            default: return { type: 'name', value: input };
+        }
+        if (idPattern && idPattern.test(input)) return { type: 'id', value: input };
+        return { type: 'name', value: input };
+    }
+
+    // --- File Input & Drag/Drop Handling ---
+    function setupFileInput(inputId, dropZoneId, isMultiple, callback) {
+        const inputEl = document.getElementById(inputId);
+        const dropZone = document.getElementById(dropZoneId);
+        if (!inputEl || !dropZone) return;
+        const handleFiles = (files) => callback(isMultiple ? [...files] : files[0]);
+        inputEl.addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('bg-indigo-50', 'border-indigo-400'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('bg-indigo-50', 'border-indigo-400'); });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('bg-indigo-50', 'border-indigo-400'); handleFiles(e.dataTransfer.files); });
+    }
+    setupFileInput('image-files', 'file-drop-zone', true, (files) => { files.forEach(file => processAndAddImage(file, file.name)); });
+    setupFileInput('repeat-image-file', 'repeat-file-drop-zone', true, (files) => {
+        files.forEach(file => {
+            const isDuplicate = repeatedImageTasks.some(img => img.name === file.name && img.size === file.size);
+            if (isDuplicate) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const newRepeatTask = { id: `repeat-${Date.now()}-${Math.random()}`, name: file.name, size: file.size, dataUrl: e.target.result, count: uploadedImages.length > 0 ? uploadedImages.length : 9 };
+                repeatedImageTasks.push(newRepeatTask);
+                repeatImagePreviewGrid.appendChild(createRepeatPreviewElement(newRepeatTask));
             };
-            
-            inputEl.addEventListener('change', (e) => {
-                handleFiles(e.target.files);
-                e.target.value = ''; // Reset input to allow re-uploading the same file
-            });
-            
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('bg-indigo-50', 'border-indigo-400');
-            });
-            dropZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('bg-indigo-50', 'border-indigo-400');
-            });
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('bg-indigo-50', 'border-indigo-400');
-                handleFiles(e.dataTransfer.files);
-            });
-        }
-
-        setupFileInput('image-files', 'file-drop-zone', true, (files) => {
-            files.forEach(file => {
-                const isDuplicate = uploadedImages.some(img => img.name === file.name && img.size === file.size);
-                if (isDuplicate) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const newImage = { 
-                        id: `img-${Date.now()}-${Math.random()}`, 
-                        name: file.name, 
-                        size: file.size,
-                        dataUrl: e.target.result 
-                    };
-                    uploadedImages.push(newImage);
-                    const previewEl = createPreviewElement(newImage.id, file.name, e.target.result);
-                    imagePreviewGrid.appendChild(previewEl);
-                };
-                reader.readAsDataURL(file);
-            });
+            reader.readAsDataURL(file);
         });
+    });
 
-        setupFileInput('repeat-image-file', 'repeat-file-drop-zone', true, (files) => {
-            files.forEach(file => {
-                const isDuplicate = repeatedImageTasks.some(img => img.name === file.name && img.size === file.size);
-                if (isDuplicate) return;
+    // --- Image Handling & Previews ---
+    function processAndAddImage(imageBlob, name) {
+        const isDuplicate = uploadedImages.some(img => img.name === name);
+        if (isDuplicate && imageBlob instanceof File) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const newImage = { id: `img-${Date.now()}-${Math.random()}`, name: name, size: imageBlob.size, dataUrl: e.target.result };
+            uploadedImages.push(newImage);
+            imagePreviewGrid.appendChild(createPreviewElement(newImage.id, name, e.target.result));
+        };
+        reader.readAsDataURL(imageBlob);
+    }
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const newRepeatTask = { 
-                        id: `repeat-${Date.now()}-${Math.random()}`,
-                        name: file.name, 
-                        size: file.size,
-                        dataUrl: e.target.result, 
-                        count: uploadedImages.length > 0 ? uploadedImages.length : 9 
-                    };
-                    repeatedImageTasks.push(newRepeatTask);
-                    const previewEl = createRepeatPreviewElement(newRepeatTask);
-                    repeatImagePreviewGrid.appendChild(previewEl);
-                };
-                reader.readAsDataURL(file);
-            });
+    function createPreviewElement(id, name, src) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative group';
+        wrapper.id = id;
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = name;
+        img.className = 'w-full h-auto object-cover rounded-md shadow-sm';
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate rounded-b-md';
+        overlay.textContent = name;
+        const removeButton = document.createElement('div');
+        removeButton.className = 'remove-btn';
+        removeButton.innerHTML = '&times;';
+        removeButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            uploadedImages = uploadedImages.filter(img => img.id !== id);
+            document.getElementById(id)?.remove();
         });
+        wrapper.append(img, overlay, removeButton);
+        return wrapper;
+    }
 
-        function createPreviewElement(id, name, src) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'relative group';
-            wrapper.id = id;
-
-            const img = document.createElement('img');
-            img.src = src;
-            img.alt = name;
-            img.className = 'w-full h-auto object-cover rounded-md shadow-sm';
-
-            const overlay = document.createElement('div');
-            overlay.className = 'absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate rounded-b-md';
-            overlay.textContent = name;
-
-            const removeButton = document.createElement('div');
-            removeButton.className = 'remove-btn';
-            removeButton.innerHTML = '&times;';
-            removeButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                uploadedImages = uploadedImages.filter(img => img.id !== id);
-                document.getElementById(id).remove();
-            });
-
-            wrapper.appendChild(img);
-            wrapper.appendChild(overlay);
-            wrapper.appendChild(removeButton);
-            return wrapper;
-        }
-        
-        function createRepeatPreviewElement(task) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'relative group flex items-center gap-4 bg-gray-100 p-4 rounded-lg';
-            wrapper.id = task.id;
-
-            const img = document.createElement('img');
-            img.src = task.dataUrl;
-            img.alt = task.name;
-            img.className = 'w-20 h-auto object-cover rounded-md shadow-sm';
-            
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'flex-grow';
-            
-            const nameEl = document.createElement('p');
-            nameEl.textContent = task.name;
-            nameEl.className = 'font-semibold text-gray-800';
-
-            const countLabel = document.createElement('label');
-            countLabel.htmlFor = `repeat-count-${task.id}`;
-            countLabel.textContent = 'Number of copies to print:';
-            countLabel.className = 'block text-sm font-medium text-gray-700 mt-2';
-            
-            const countInput = document.createElement('input');
-            countInput.type = 'number';
-            countInput.id = `repeat-count-${task.id}`;
-            countInput.value = task.count;
-            countInput.min = 1;
-            countInput.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm';
-            countInput.addEventListener('change', (e) => {
-                const taskToUpdate = repeatedImageTasks.find(t => t.id === task.id);
-                if (taskToUpdate) {
-                    taskToUpdate.count = parseInt(e.target.value, 10) || 0;
-                }
-            });
-            
-            infoDiv.appendChild(nameEl);
-            infoDiv.appendChild(countLabel);
-            infoDiv.appendChild(countInput);
-
-            const removeButton = document.createElement('div');
-            removeButton.className = 'remove-btn opacity-100 sm:opacity-0'; // Always visible on small screens
-            removeButton.innerHTML = '&times;';
-            removeButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                repeatedImageTasks = repeatedImageTasks.filter(t => t.id !== task.id);
-                document.getElementById(task.id).remove();
-            });
-            
-            wrapper.appendChild(img);
-            wrapper.appendChild(infoDiv);
-            wrapper.appendChild(removeButton);
-
-            return wrapper;
-        }
-
-        // --- Template Logic ---
-        document.querySelectorAll('.game-template').forEach(template => {
-            template.addEventListener('click', () => {
-                const width = template.dataset.width;
-                const height = template.dataset.height;
-                document.getElementById('cardWidth').value = width;
-                document.getElementById('cardHeight').value = height;
-            });
+    function createRepeatPreviewElement(task) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative group flex items-center gap-4 bg-gray-100 p-4 rounded-lg';
+        wrapper.id = task.id;
+        const img = document.createElement('img');
+        img.src = task.dataUrl;
+        img.alt = task.name;
+        img.className = 'w-20 h-auto object-cover rounded-md shadow-sm';
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'flex-grow';
+        const nameEl = document.createElement('p');
+        nameEl.textContent = task.name;
+        nameEl.className = 'font-semibold text-gray-800';
+        const countLabel = document.createElement('label');
+        countLabel.textContent = 'Number of copies:';
+        countLabel.className = 'block text-sm font-medium text-gray-700 mt-2';
+        const countInput = document.createElement('input');
+        countInput.type = 'number';
+        countInput.value = task.count;
+        countInput.min = 1;
+        countInput.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm';
+        countInput.addEventListener('change', (e) => {
+            const taskToUpdate = repeatedImageTasks.find(t => t.id === task.id);
+            if (taskToUpdate) taskToUpdate.count = parseInt(e.target.value, 10) || 0;
         });
+        infoDiv.append(nameEl, countLabel, countInput);
+        const removeButton = document.createElement('div');
+        removeButton.className = 'remove-btn opacity-100 sm:opacity-0';
+        removeButton.innerHTML = '&times;';
+        removeButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            repeatedImageTasks = repeatedImageTasks.filter(t => t.id !== task.id);
+            document.getElementById(task.id)?.remove();
+        });
+        wrapper.append(img, infoDiv, removeButton);
+        return wrapper;
+    }
 
+    // --- Template & Importer Logic ---
+    document.querySelectorAll('.game-template').forEach(template => {
+        template.addEventListener('click', () => {
+            document.querySelectorAll('.game-template').forEach(t => t.classList.remove('selected'));
+            template.classList.add('selected');
+            selectedGame = template.dataset.game;
+            document.getElementById('cardWidth').value = template.dataset.width;
+            document.getElementById('cardHeight').value = template.dataset.height;
+            listImporterSection.classList.remove('hidden');
+            setTimeout(() => listImporterSection.classList.remove('opacity-0'), 10);
+            uploadTitle.textContent = "Step 3: Or Upload Manually";
+            cardbackTitle.textContent = "Step 4: Add Card Backs (Optional)";
+            settingsTitle.textContent = "Step 5: Layout Settings";
+        });
+    });
 
-        // --- PDF Generation Logic ---
-        generatePdfBtn.addEventListener('click', async () => {
-            generatePdfBtn.disabled = true;
-            loader.classList.remove('hidden');
-            statusDiv.textContent = 'Starting PDF generation...';
-
-            try {
-                const cardWidthMm = parseFloat(document.getElementById('cardWidth').value);
-                const cardHeightMm = parseFloat(document.getElementById('cardHeight').value);
-                const gapMm = parseFloat(document.getElementById('gap').value);
-                const marginMm = parseFloat(document.getElementById('margin').value);
-
-                if (isNaN(cardWidthMm) || isNaN(cardHeightMm) || isNaN(gapMm) || isNaN(marginMm)) {
-                    throw new Error("Please enter valid numbers for all settings.");
+    // --- API Fetching Logic ---
+    fetchCardsBtn.addEventListener('click', async () => {
+        const cardListText = cardListInput.value.trim();
+        if (!cardListText || !selectedGame) return;
+        const lines = cardListText.split('\n').filter(line => line.trim() !== '');
+        const cardTasks = [];
+        const regex = /^(?:(\d+)\s*x\s*)?(.*)/i;
+        lines.forEach(line => {
+            const match = line.trim().match(regex);
+            if (match) {
+                const count = parseInt(match[1] || '1', 10);
+                const rawInput = match[2].trim();
+                if (rawInput) {
+                    const { type, value } = detectInputType(rawInput, selectedGame);
+                    cardTasks.push({ name: rawInput, count, type, value });
                 }
-
-                let finalImageList = [...uploadedImages];
-                
-                // Add repeated images
-                repeatedImageTasks.forEach(task => {
-                    if (task.count > 0) {
-                        for (let i = 0; i < task.count; i++) {
-                            finalImageList.push(task);
-                        }
-                    }
-                });
-
-                if (finalImageList.length === 0) {
-                    throw new Error("No images to process. Please upload some cards.");
-                }
-                
-                statusDiv.textContent = `Processing ${finalImageList.length} total images...`;
-
-                const doc = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-
-                const availableWidth = pageWidth - (2 * marginMm);
-                const availableHeight = pageHeight - (2 * marginMm);
-
-                const numX = Math.floor((availableWidth + gapMm) / (cardWidthMm + gapMm));
-                const numY = Math.floor((availableHeight + gapMm) / (cardHeightMm + gapMm));
-                
-                if (numX <= 0 || numY <= 0) {
-                    throw new Error("Card size is too large to fit on an A4 page with the specified margins.");
-                }
-
-                let xIndex = 0;
-                let yIndex = 0;
-                let pageCount = 1;
-
-                for (let i = 0; i < finalImageList.length; i++) {
-                    const image = finalImageList[i];
-                    statusDiv.textContent = `Adding image ${i + 1}/${finalImageList.length}: ${image.name}`;
-                    
-                    if (yIndex >= numY) {
-                        doc.addPage();
-                        pageCount++;
-                        xIndex = 0;
-                        yIndex = 0;
-                    }
-                    
-                    const xPos = marginMm + xIndex * (cardWidthMm + gapMm);
-                    const yPos = marginMm + yIndex * (cardHeightMm + gapMm);
-
-                    doc.addImage(image.dataUrl, 'JPEG', xPos, yPos, cardWidthMm, cardHeightMm);
-
-                    xIndex++;
-                    if (xIndex >= numX) {
-                        xIndex = 0;
-                        yIndex++;
-                    }
-                    await new Promise(resolve => setTimeout(resolve, 10)); 
-                }
-
-                statusDiv.textContent = 'Saving PDF...';
-                doc.save('card_layout.pdf');
-                statusDiv.textContent = `Successfully generated PDF with ${pageCount} page(s)!`;
-
-            } catch (error) {
-                statusDiv.textContent = `Error: ${error.message}`;
-                console.error(error);
-            } finally {
-                generatePdfBtn.disabled = false;
-                loader.classList.add('hidden');
             }
         });
+        if (cardTasks.length === 0) return;
+        fetchCardsBtn.disabled = true;
+        fetchStatus.innerHTML = '';
+        for (const task of cardTasks) {
+            fetchStatus.innerHTML += `<div>Fetching ${task.name}...</div>`;
+            try {
+                const cardData = await fetchCardData(task.value, selectedGame, task.type);
+                if (!cardData || !cardData.imageUrl) throw new Error('Image URL not found.');
 
-    </script>
+                // *** THIS IS THE KEY CHANGE ***
+                // Instead of fetching the image directly, we use our proxy for Yu-Gi-Oh!
+                let imageToFetch = cardData.imageUrl;
+                if (new URL(imageToFetch).hostname === 'images.ygoprodeck.com') {
+                    imageToFetch = `/api/image-proxy?url=${encodeURIComponent(cardData.imageUrl)}`;
+                }
+
+                const response = await fetch(imageToFetch);
+                if (!response.ok) throw new Error(`Failed to download image: ${response.statusText}`);
+
+                const imageBlob = await response.blob();
+                for (let i = 0; i < task.count; i++) {
+                    const uniqueName = task.count > 1 ? `${cardData.name} #${i + 1}` : cardData.name;
+                    processAndAddImage(imageBlob, uniqueName);
+                }
+                fetchStatus.innerHTML += `<div class="text-green-600">✔ Found: ${cardData.name}</div>`;
+            } catch (error) {
+                console.error(`Failed to fetch ${task.name}:`, error);
+                fetchStatus.innerHTML += `<div class="text-red-600">❌ Could not find: ${task.name}</div>`;
+            }
+            fetchStatus.scrollTop = fetchStatus.scrollHeight;
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        fetchStatus.innerHTML += `<div class="font-bold mt-2">Fetching complete.</div>`;
+        fetchCardsBtn.disabled = false;
+    });
+
+    // --- Card Data Fetching ---
+    async function fetchCardData(value, game, type) {
+        const encodedValue = encodeURIComponent(value);
+        let url;
+        if (type === 'name') {
+            url = game === 'pokemon' ? `${API_ENDPOINTS[game].name}"${encodedValue}"` : `${API_ENDPOINTS[game].name}${encodedValue}`;
+        } else {
+            url = `${API_ENDPOINTS[game].id}${game === 'magic' ? value : encodedValue}`;
+        }
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API request failed: ${response.statusText}`);
+        const json = await response.json();
+        switch (game) {
+            case 'pokemon':
+                const pkmnCard = type === 'name' ? json.data?.[0] : json.data;
+                if (!pkmnCard) throw new Error('Card not found');
+                return { name: pkmnCard.name, imageUrl: pkmnCard.images.large };
+            case 'magic':
+                if (json.object === 'error') throw new Error(json.details);
+                return { name: json.name, imageUrl: json.image_uris.large };
+            case 'yugioh':
+                if (json.error || !json.data || !json.data.length === 0) throw new Error('Card not found');
+                return { name: json.data[0].name, imageUrl: json.data[0].card_images[0].image_url };
+            default:
+                throw new Error('Invalid game selected');
+        }
+    }
+
+    // --- PDF Generation Logic ---
+    generatePdfBtn.addEventListener('click', async () => {
+        generatePdfBtn.disabled = true;
+        loader.classList.remove('hidden');
+        statusDiv.textContent = 'Starting PDF generation...';
+        try {
+            const cardWidthMm = parseFloat(document.getElementById('cardWidth').value);
+            const cardHeightMm = parseFloat(document.getElementById('cardHeight').value);
+            const gapMm = parseFloat(document.getElementById('gap').value);
+            const marginMm = parseFloat(document.getElementById('margin').value);
+            if ([cardWidthMm, cardHeightMm, gapMm, marginMm].some(isNaN)) throw new Error("Please enter valid numbers for settings.");
+            let finalImageList = [...uploadedImages];
+            repeatedImageTasks.forEach(task => {
+                for (let i = 0; i < task.count; i++) finalImageList.push({ ...task, name: `${task.name} (Back) #${i+1}` });
+            });
+            if (finalImageList.length === 0) throw new Error("No images to process.");
+            statusDiv.textContent = `Processing ${finalImageList.length} total images...`;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const availableWidth = pageWidth - (2 * marginMm);
+            const availableHeight = pageHeight - (2 * marginMm);
+            const numX = Math.floor((availableWidth + gapMm) / (cardWidthMm + gapMm));
+            const numY = Math.floor((availableHeight + gapMm) / (cardHeightMm + gapMm));
+            if (numX <= 0 || numY <= 0) throw new Error("Card size is too large to fit on the page.");
+            let xIndex = 0, yIndex = 0, pageCount = 1;
+            for (let i = 0; i < finalImageList.length; i++) {
+                const image = finalImageList[i];
+                statusDiv.textContent = `Adding image ${i + 1}/${finalImageList.length}: ${image.name}`;
+                if (yIndex >= numY) { doc.addPage(); pageCount++; xIndex = 0; yIndex = 0; }
+                const xPos = marginMm + xIndex * (cardWidthMm + gapMm);
+                const yPos = marginMm + yIndex * (cardHeightMm + gapMm);
+                doc.addImage(image.dataUrl, 'JPEG', xPos, yPos, cardWidthMm, cardHeightMm, undefined, 'FAST');
+                xIndex++;
+                if (xIndex >= numX) { xIndex = 0; yIndex++; }
+                await new Promise(resolve => setTimeout(resolve, 5));
+            }
+            statusDiv.textContent = 'Saving PDF...';
+            doc.save('card_proxies.pdf');
+            statusDiv.textContent = `✅ Successfully generated PDF with ${pageCount} page(s)!`;
+        } catch (error) {
+            statusDiv.textContent = `Error: ${error.message}`;
+            console.error(error);
+        } finally {
+            generatePdfBtn.disabled = false;
+            loader.classList.add('hidden');
+        }
+    });
+</script>
 </body>
 </html>
-
